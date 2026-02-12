@@ -2,51 +2,67 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# 1. Konfiguráció (A Secrets-ből olvassa ki a kulcsot)
+# --- KONFIGURÁCIÓ ---
+st.set_page_config(page_title="Gasztró-Spóroló", page_icon="🍳", layout="centered")
+
+# API kulcs betöltése a titkos tárolóból
 if "GOOGLE_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 else:
-    st.error("Hiányzik a GOOGLE_API_KEY a Secrets beállításokból!")
+    st.error("⚠️ Hiányzik az API kulcs! Kérlek állítsd be a Secrets menüben.")
+    st.stop()
 
-# 2. Az oldal kinézete
-st.set_page_config(page_title="Gasztró-Spóroló", page_icon="🍳")
+# --- DESIGN ---
 st.title("🍳 Gasztró-Spóroló AI")
-st.write("Tölts fel egy képet a hűtőd tartalmáról, vagy írd be, mid van!")
+st.markdown("""
+Üdv! Ez az alkalmazás segít, hogy **ne dobj ki ételt**, és **spórolj a bevásárláson**.
+Tölts fel egy képet a hűtődről vagy a kamrádról!
+""")
 
-# 3. Bemenet: Kép vagy Szöveg
-uploaded_file = st.file_uploader("Fotó feltöltése az alapanyagokról...", type=["jpg", "jpeg", "png"])
-ingredients_text = st.text_input("Vagy írd be ide az alapanyagokat:", placeholder="Pl. 3 tojás, fél doboz tejföl...")
+# --- BEMENETEK ---
+col1, col2 = st.columns(2)
 
-# 4. A "Mágia" Gomb
-if st.button("Receptek keresése 🚀"):
+with col1:
+    uploaded_file = st.file_uploader("📸 Fotó feltöltése", type=["jpg", "jpeg", "png"])
+
+with col2:
+    ingredients_text = st.text_area("📝 Vagy írd be, mid van:", height=100, placeholder="Pl. fél doboz tejföl, fonnyadt répa, 3 tojás...")
+
+# --- LOGIKA ---
+if st.button("Mit főzzek? 🧑‍🍳", type="primary"):
+    
     if not uploaded_file and not ingredients_text:
-        st.error("Kérlek, adj meg legalább egy képet vagy írd be az alapanyagokat!")
+        st.warning("Kérlek, tölts fel egy képet vagy írj be valamit!")
     else:
         with st.spinner('Az AI séf gondolkodik és az akciós újságokat bújják...'):
             try:
-                # Modell betöltése (Google Search bekapcsolva!)
-                # A 'gemini-2.0-flash' a leggyorsabb és legolcsóbb erre
-                model = genai.GenerativeModel('gemini-2.0-flash') 
+                # Modell kiválasztása - A Flash gyors és olcsó
+                model = genai.GenerativeModel('gemini-1.5-flash')
                 
-                # A Prompt összeállítása (ugyanaz, amit a Gemben használtál)
-                system_prompt = """
-                Te egy Gasztró-Spóroló asszisztens vagy. 
-                1. Azonosítsd az alapanyagokat.
-                2. Adj egy receptet, amihez NEM kell más.
-                3. Adj egy receptet, amihez kell más, és írd ki, hogy a hiányzó elem (pl. gomba) általában hol kapható olcsón Magyarországon.
-                Használj formázást, emojikat.
+                # A rendszerutasítás (System Prompt)
+                prompt = """
+                Te egy magyar "Gasztró-Spóroló" szakértő vagy.
+                
+                FELADAT:
+                1. Azonosítsd a bemenet (kép vagy szöveg) alapján az alapanyagokat.
+                2. Készíts két listát:
+                   A) "🟢 PAZARLÁSMENTES": Amit MOST el tud készíteni a felhasználó (max só, bors, olaj, liszt kellhet pluszban).
+                   B) "🟡 OKOS BEVÁSÁRLÓS": Egy finomabb recept, amihez 1-2 extra dolog kell.
+                
+                3. A "B" verziónál ÍRD KI, hogy a hiányzó alapanyag (pl. gomba, tejszín) általában melyik boltban szokott lenni jó áron Magyarországon (Lidl, Aldi, Penny, Tesco tapasztalatok alapján).
+                
+                Formázd a választ szépen, áttekinthetően, emojikkal!
                 """
                 
-                inputs = [system_prompt]
-                
+                # Bemenetek összegyűjtése
+                inputs = [prompt]
                 if ingredients_text:
                     inputs.append(f"Ezek vannak nálam: {ingredients_text}")
-                
                 if uploaded_file:
                     image = Image.open(uploaded_file)
                     inputs.append(image)
 
-                # Válasz generálása
+                # Generálás
                 response = model.generate_content(inputs)
                 
                 # Eredmény kiírása
@@ -55,8 +71,3 @@ if st.button("Receptek keresése 🚀"):
                 
             except Exception as e:
                 st.error(f"Hiba történt: {e}")
-                st.info("Ellenőrizd, hogy az API kulcsod helyes-e!")
-
-# 5. Lábléc
-st.markdown("---")
-st.caption("Powered by Google Gemini API | Az árak tájékoztató jellegűek.")
