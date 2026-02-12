@@ -1,75 +1,52 @@
 import streamlit as st
 import google.generativeai as genai
-from PIL import Image
+import os
 
-# --- KONFIGURÁCIÓ ---
-st.set_page_config(page_title="Gasztró-Spóroló", page_icon="🍳", layout="centered")
+st.title("🔧 Diagnosztika")
 
-# API kulcs betöltése a titkos tárolóból
-if "GOOGLE_API_KEY" in st.secrets:
-    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-else:
-    st.error("⚠️ Hiányzik az API kulcs! Kérlek állítsd be a Secrets menüben.")
+# 1. Ellenőrizzük a Kulcsot
+api_key = st.secrets.get("GOOGLE_API_KEY")
+if not api_key:
+    st.error("HIBA: Nincs beállítva az API kulcs a Secrets-ben!")
     st.stop()
+else:
+    st.success("✅ API Kulcs megtalálva.")
+    genai.configure(api_key=api_key)
 
-# --- DESIGN ---
-st.title("🍳 Gasztró-Spóroló AI")
-st.markdown("""
-Üdv! Ez az alkalmazás segít, hogy **ne dobj ki ételt**, és **spórolj a bevásárláson**.
-Tölts fel egy képet a hűtődről vagy a kamrádról!
-""")
-
-# --- BEMENETEK ---
-col1, col2 = st.columns(2)
-
-with col1:
-    uploaded_file = st.file_uploader("📸 Fotó feltöltése", type=["jpg", "jpeg", "png"])
-
-with col2:
-    ingredients_text = st.text_area("📝 Vagy írd be, mid van:", height=100, placeholder="Pl. fél doboz tejföl, fonnyadt répa, 3 tojás...")
-
-# --- LOGIKA ---
-if st.button("Mit főzzek? 🧑‍🍳", type="primary"):
+# 2. Ellenőrizzük a Verziót (EZ A LÉNYEG!)
+try:
+    version = genai.__version__
+    st.write(f" telepített Google verzió: **{version}**")
     
-    if not uploaded_file and not ingredients_text:
-        st.warning("Kérlek, tölts fel egy képet vagy írj be valamit!")
+    # Ha a verzió 0.7.0 alatti, akkor ez a baj!
+    if version < "0.7.0":
+        st.error("🚨 A VERZIÓ TÚL RÉGI! A Flash modellhez legalább 0.7.0 kell.")
+        st.info("Megoldás: Frissítsd a requirements.txt fájlt és indítsd újra az Appot.")
     else:
-        with st.spinner('Az AI séf gondolkodik és az akciós újságokat bújják...'):
-            try:
-                # Modell kiválasztása - A Flash gyors és olcsó
-                model = genai.GenerativeModel('gemini-1.5-flash')
-                
-                # A rendszerutasítás (System Prompt)
-                prompt = """
-                Te egy magyar "Gasztró-Spóroló" szakértő vagy.
-                
-                FELADAT:
-                1. Azonosítsd a bemenet (kép vagy szöveg) alapján az alapanyagokat.
-                2. Készíts két listát:
-                   A) "🟢 PAZARLÁSMENTES": Amit MOST el tud készíteni a felhasználó (max só, bors, olaj, liszt kellhet pluszban).
-                   B) "🟡 OKOS BEVÁSÁRLÓS": Egy finomabb recept, amihez 1-2 extra dolog kell.
-                
-                3. A "B" verziónál ÍRD KI, hogy a hiányzó alapanyag (pl. gomba, tejszín) általában melyik boltban szokott lenni jó áron Magyarországon (Lidl, Aldi, Penny, Tesco tapasztalatok alapján).
-                
-                Formázd a választ szépen, áttekinthetően, emojikkal!
-                """
-                
-                # Bemenetek összegyűjtése
-                inputs = [prompt]
-                if ingredients_text:
-                    inputs.append(f"Ezek vannak nálam: {ingredients_text}")
-                if uploaded_file:
-                    image = Image.open(uploaded_file)
-                    inputs.append(image)
+        st.success("✅ A verzió megfelelő.")
 
-                # Generálás
-                response = model.generate_content(inputs)
-                
-                # Eredmény kiírása
-                st.markdown("---")
-                st.markdown(response.text)
-                
-            except Exception as e:
-                st.error(f"Hiba történt: {e}")
+except Exception as e:
+    st.error(f"Nem sikerült verziót olvasni: {e}")
+
+# 3. Listázzuk ki, mit lát a szerver
+st.write("---")
+st.write("🔍 Elérhető modellek listázása a kulcsoddal:")
+
+if st.button("Modellek lekérdezése"):
+    try:
+        found_flash = False
+        for m in genai.list_models():
+            st.code(f"{m.name}")
+            if "flash" in m.name:
+                found_flash = True
+        
+        if found_flash:
+            st.success("✅ A 'gemini-1.5-flash' elérhető! Használhatod a kódban.")
+        else:
+            st.error("❌ A rendszer nem látja a Flash modellt.")
+            
+    except Exception as e:
+        st.error(f"Hiba a listázáskor: {e}")
+
 
 
