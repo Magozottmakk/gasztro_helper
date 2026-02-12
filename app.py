@@ -5,7 +5,7 @@ from PIL import Image
 # ---------------------------------------------------------
 # IDE MÁSOLD BE A KULCSODAT AZ IDÉZŐJELEK KÖZÉ!
 # Példa: my_api_key = "AIzaSyD......"
-my_api_key = "IDE_MÁSOLD_A_HOSSZÚ_AIZA_KULCSODAT"
+my_api_key = "AIzaSyCHOIsYHBmhXVbUQ6ew7s44-OWeUsxdpNs"
 # ---------------------------------------------------------
 
 st.set_page_config(page_title="Gasztró-Spóroló", page_icon="🍳")
@@ -45,6 +45,7 @@ if st.button("Mehet! 🚀"):
             except Exception as e:
                 st.error(f"HIBA TÖRTÉNT: {e}")
                 st.write("Javaslat: Ellenőrizd, hogy a kulcsod az AI Studio-ból van-e (nem Google Cloud Console), és hogy átállítottad-e a Pythont 3.10-re!")
+
 
 
 
