@@ -37,7 +37,7 @@ if st.button("Mit főzzek? 🧑‍🍳", type="primary"):
         with st.spinner('Az AI séf gondolkodik és az akciós újságokat bújják...'):
             try:
                 # Modell kiválasztása - A Flash gyors és olcsó
-                model = genai.GenerativeModel('gemini-pro')
+                model = genai.GenerativeModel('gemini-1.5-flash')
                 
                 # A rendszerutasítás (System Prompt)
                 prompt = """
@@ -71,4 +71,5 @@ if st.button("Mit főzzek? 🧑‍🍳", type="primary"):
                 
             except Exception as e:
                 st.error(f"Hiba történt: {e}")
+
 
