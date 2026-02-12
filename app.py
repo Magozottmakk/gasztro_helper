@@ -1,5 +1,5 @@
 import streamlit as st
-import google.generativeai as genai
+from google import genai
 from PIL import Image
 
 # ---------------------------------------------------------
@@ -45,6 +45,7 @@ if st.button("Mehet! 🚀"):
             except Exception as e:
                 st.error(f"HIBA TÖRTÉNT: {e}")
                 st.write("Javaslat: Ellenőrizd, hogy a kulcsod az AI Studio-ból van-e (nem Google Cloud Console), és hogy átállítottad-e a Pythont 3.10-re!")
+
 
 
 
