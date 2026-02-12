@@ -2,49 +2,74 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# ---------------------------------------------------------
-# IDE MÁSOLD BE A KULCSODAT AZ IDÉZŐJELEK KÖZÉ!
-# Példa: my_api_key = "AIzaSyD......"
+# --- BEÁLLÍTÁSOK ---
+# IDE MÁSOLD BE AZ ÚJ KULCSOT (Az idézőjelek maradjanak!)
 my_api_key = "AIzaSyCHOIsYHBmhXVbUQ6ew7s44-OWeUsxdpNs"
-# ---------------------------------------------------------
 
 st.set_page_config(page_title="Gasztró-Spóroló", page_icon="🍳")
-st.title("🍳 Gasztró-Spóroló (Direkt Teszt)")
 
-# Kulcs beállítása közvetlenül
+# --- KULCS ELLENŐRZÉSE ÉS AKTIVÁLÁSA ---
 try:
+    if "AIza" not in my_api_key:
+        st.error("⚠️ Hiba: Még nem másoltad be a kulcsot a kód 6. sorába!")
+        st.stop()
+    
     genai.configure(api_key=my_api_key)
+
 except Exception as e:
-    st.error(f"Baj van a kulccsal: {e}")
+    st.error(f"Hiba a kulcs beállításánál: {e}")
+    st.stop()
 
-# Képfeltöltés
-uploaded_file = st.file_uploader("📸 Fotó feltöltése", type=["jpg", "jpeg", "png"])
-ingredients_text = st.text_input("Vagy írd be, mid van:")
+# --- FELÜLET ---
+st.title("🍳 Gasztró-Spóroló")
+st.write("Szia! Küldj egy képet vagy írd be, mid van, és segítek főzni!")
 
-if st.button("Mehet! 🚀"):
-    # Ellenőrizzük, hogy kicserélted-e a szöveget
-    if "IDE_MÁSOLD" in my_api_key:
-        st.error("⚠️ ELFELEJTETTED BEÍRNI A KULCSOT A KÓDBA! (app.py 8. sor)")
-    else:
-        with st.spinner('Kapcsolódás a Google szerverekhez...'):
-            try:
-                # 1. Próbáljuk a legújabb modellt
-                model = model="gemini-3-flash-preview"
+col1, col2 = st.columns(2)
+with col1:
+    uploaded_file = st.file_uploader("📸 Kép feltöltése", type=["jpg", "jpeg", "png"])
+with col2:
+    ingredients_text = st.text_area("📝 Vagy írd be itt:", height=100)
+
+# --- A LÉNYEG (JAVÍTVA) ---
+if st.button("Mehet! 🚀", type="primary"):
+    with st.spinner('A séf gondolkodik... (Ez eltarthat pár másodpercig)'):
+        try:
+            # Itt volt a hiba legutóbb - most javítva:
+            # Ez létrehozza az AI objektumot (NEM string!)
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            
+            # Bemenet összeállítása
+            prompt = "Te egy kreatív szakács vagy. Adj receptötleteket ezekből az alapanyagokból. Legyen egy egyszerű (csak ezekből) és egy bevásárlós (extra hozzávalókkal)."
+            inputs = [prompt]
+            
+            if ingredients_text:
+                inputs.append(f"Alapanyagok: {ingredients_text}")
+            if uploaded_file:
+                img = Image.open(uploaded_file)
+                inputs.append(img)
                 
-                # Egyszerű teszt üzenet
-                prompt = "Szia! Mondj egy receptet ebből: "
-                
-                inputs = [prompt]
-                if ingredients_text: inputs.append(ingredients_text)
-                if uploaded_file: inputs.append(Image.open(uploaded_file))
-                
+            if len(inputs) == 1:
+                st.warning("Kérlek adj meg legalább egy alapanyagot vagy képet!")
+            else:
+                # Generálás indítása
                 response = model.generate_content(inputs)
-                st.success("MŰKÖDIK! 🎉")
-                st.write(response.text)
                 
-            except Exception as e:
-                st.error(f"HIBA TÖRTÉNT: {e}")
-                st.write("Javaslat: Ellenőrizd, hogy a kulcsod az AI Studio-ból van-e (nem Google Cloud Console), és hogy átállítottad-e a Pythont 3.10-re!")
+                st.success("Kész! Íme az ötletek:")
+                st.markdown("---")
+                st.markdown(response.text)
+                
+        except Exception as e:
+            # Ha még mindig 404 van, itt kiírjuk szépen
+            err_msg = str(e)
+            if "404" in err_msg:
+                st.error("🚨 HIBA: 404 (Nem található)")
+                st.warning("""
+                Ez azt jelenti, hogy a KULCS nem jó projekthez tartozik.
+                Biztos, hogy a 'Create API key in NEW PROJECT' opciót választottad a Google AI Studio-ban?
+                """)
+            else:
+                st.error(f"Váratlan hiba történt: {err_msg}")
+
 
 
 
