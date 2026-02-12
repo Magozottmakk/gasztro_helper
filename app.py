@@ -2,9 +2,11 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# 1. Konfiguráció (Ide majd a saját kulcsodat kell beírni vagy környezeti változóból behúzni)
-# Ha lokálisan futtatod, ide írd be a kulcsot: genai.configure(api_key="IDE_JÖN_AZ_API_KULCS")
-# De biztonságosabb, ha a Streamlit Secrets-et használod (lásd lejjebb).
+# 1. Konfiguráció (A Secrets-ből olvassa ki a kulcsot)
+if "GOOGLE_API_KEY" in st.secrets:
+    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+else:
+    st.error("Hiányzik a GOOGLE_API_KEY a Secrets beállításokból!")
 
 # 2. Az oldal kinézete
 st.set_page_config(page_title="Gasztró-Spóroló", page_icon="🍳")
