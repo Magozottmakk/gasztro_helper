@@ -1,5 +1,5 @@
 import streamlit as st
-from google import genai
+import google.generativeai as genai
 from PIL import Image
 
 # ---------------------------------------------------------
@@ -29,7 +29,7 @@ if st.button("Mehet! 🚀"):
         with st.spinner('Kapcsolódás a Google szerverekhez...'):
             try:
                 # 1. Próbáljuk a legújabb modellt
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                model = model="gemini-3-flash-preview"
                 
                 # Egyszerű teszt üzenet
                 prompt = "Szia! Mondj egy receptet ebből: "
@@ -45,6 +45,7 @@ if st.button("Mehet! 🚀"):
             except Exception as e:
                 st.error(f"HIBA TÖRTÉNT: {e}")
                 st.write("Javaslat: Ellenőrizd, hogy a kulcsod az AI Studio-ból van-e (nem Google Cloud Console), és hogy átállítottad-e a Pythont 3.10-re!")
+
 
 
 
